@@ -5,33 +5,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import Note from '../components/Note';
-
-const defaultNotes = [
-    {
-        id: 0,
-        headline: 'My First Note',
-        body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in tortor nec mauris finibus tincidunt sed vitae felis. Curabitur ornare purus ut mi pellentesque, at tincidunt risus euismod. Etiam id posuere metus. Nullam et laoreet metus. Nulla condimentum purus sit amet ullamcorper auctor. Nam eget risus lectus. Integer malesuada bibendum mauris tristique volutpat. Duis vitae placerat nisl. Nam sit amet ligula odio. Quisque a leo non sapien commodo porttitor. Nullam tempus id ipsum vitae tristique. Quisque eget laoreet massa, sit amet tristique odio. Interdum et malesuada fames ac ante ipsum primis in faucibus. Maecenas id tincidunt tellus. Morbi sit amet nulla velit.',
-    },
-    {
-        id: 1,
-        headline: 'React Native Intro',
-        body: 'Maecenas arcu massa, suscipit id massa a, tempus consequat eros. Quisque venenatis congue ex bibendum fermentum. Phasellus ligula quam, tincidunt a justo id, feugiat consectetur erat. Aliquam blandit quam ipsum, id blandit velit blandit id. Fusce sagittis egestas luctus. Aliquam nec libero faucibus, aliquet velit vitae, luctus felis. Praesent aliquet consectetur mi sit amet pulvinar. Mauris vitae felis tempor metus ornare aliquet. Cras nulla lectus, consequat commodo diam in, finibus dignissim urna. Phasellus purus justo, varius non commodo quis, vulputate eget enim.',
-    },
-    {
-        id: 2,
-        headline: 'KEA Guidelines',
-        body: 'Nam tempus, ante in bibendum cursus, arcu justo placerat neque, mattis iaculis dolor ipsum ac magna. Sed luctus, ipsum congue feugiat hendrerit, massa ipsum cursus massa, at ullamcorper sem metus non nulla. Cras molestie dictum dictum. Pellentesque egestas interdum suscipit. Duis quis nisi sit amet ligula porta bibendum. In pretium sapien sit amet magna lobortis aliquet. Vivamus odio nibh, scelerisque tristique augue et, congue congue metus. In pulvinar efficitur ultrices. Nunc non leo enim. Fusce vulputate porta tristique. Quisque scelerisque justo enim, at sollicitudin massa tincidunt vel. In hac habitasse platea dictumst. Aliquam volutpat ipsum metus. Mauris sodales felis nulla, et sollicitudin nunc hendrerit et. Duis id ante volutpat, tempus lacus ut, sagittis velit.',
-    },
-    {
-        id: 3,
-        headline: 'Example',
-        body: 'In quis malesuada mauris. Phasellus mi odio, facilisis vitae viverra eget, luctus at turpis. Vestibulum lacinia eros diam, a accumsan nisi laoreet eu. Aenean venenatis eleifend ligula et efficitur. Vestibulum semper nec justo at sodales. Aliquam eget odio velit. Sed gravida dui nunc, sit amet faucibus enim accumsan vel.',
-    },
-]
+import { noteDB } from '../api/firebase.db';
 
 export default function NotesScreen({navigation, route}) {
-    const [notes, setNotes] = useState(defaultNotes);
-    const [noteId, setNoteId] = useState(defaultNotes.length);
+    const [notes, setNotes] = useState([]);
     const [noteHeadline, setNoteHeadline] = useState('');
 
     /*******************************************************************
@@ -51,7 +28,6 @@ export default function NotesScreen({navigation, route}) {
         else {
             navigation.navigate('Note', {
                 note: {
-                    id: noteId,
                     headline: noteHeadline,
                 },
             });
@@ -60,23 +36,9 @@ export default function NotesScreen({navigation, route}) {
         }
     };
 
-    const createNote = (note) => {
-        setNotes([...notes, note]);
-        setNoteId(noteId + 1);
-    };
-
-    const updateNote = (noteIndex, updatedNote) => {
-        setNotes(notes.map((note, index) => {
-            if (noteIndex === index) {
-                return updatedNote;
-            }
-            else {
-                return note;
-            }
-        }));
-    };
-
     const deleteNote = (noteId) => {
+        /* Delte from both db and memory */
+        noteDB.delete(noteId);
         setNotes(notes.filter(note => note.id !== noteId));
     }
 
@@ -94,19 +56,19 @@ export default function NotesScreen({navigation, route}) {
      Screen lifecycle
     *******************************************************************/
 
+    /* Load data from firestore */
     useEffect(() => {
-        if (route.params?.note) {
-            const newNote = route.params.note;
-            const noteIndex = notes.findIndex(note => note.id === newNote.id);
-            
-            if (noteIndex >= 0) {
-                updateNote(noteIndex, newNote);
+        async function fetchData() {
+            try {
+                setNotes(await noteDB.readAll());
             }
-            else {
-                createNote(newNote);
+            catch (err) {
+                console.log(err);
             }
-        }
-    }, [route.params?.note]);
+        };
+
+        fetchData();
+    });
 
     /*******************************************************************
      Screen view

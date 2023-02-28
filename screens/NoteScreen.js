@@ -4,6 +4,8 @@ import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'reac
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
+import { noteDB } from '../api/firebase.db';
+
 export default function NoteScreen({navigation, route}) {
     const note = route.params.note;
     
@@ -14,22 +16,28 @@ export default function NoteScreen({navigation, route}) {
      Screen methods
     *******************************************************************/
 
-    const saveNote = () => {
+    const saveNote = async () => {
         if (noteHeadline === '') {
             Alert.alert('Missing headline');
         }
         else {
-            navigation.navigate({
-                name: 'Notes', 
-                params: {
-                    note: {
-                        id: note.id,
-                        headline: noteHeadline,
-                        body: noteBody
-                    },
-                },
-                merge: true,
-            });
+            /* Update note */
+            if (note.id) {
+                await noteDB.update({
+                    id: note.id,
+                    headline: noteHeadline,
+                    body: noteBody,
+                });
+            }
+            /* Create new note */
+            else {
+                await noteDB.create({
+                    headline: noteHeadline,
+                    body: noteBody,
+                });
+            }
+
+            navigation.navigate('Notes');
         }
     };
 
