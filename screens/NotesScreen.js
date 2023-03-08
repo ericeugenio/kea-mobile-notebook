@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { 
+    Alert, 
+    FlatList, 
+    KeyboardAvoidingView, 
+    Platform, 
+    Pressable, 
+    SafeAreaView, 
+    StyleSheet, 
+    Text, 
+    TextInput, 
+    View 
+} from 'react-native';
 
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 
 import Note from '../components/Note';
 import { noteDB } from '../api/firebase.db';
@@ -29,6 +40,8 @@ export default function NotesScreen({navigation, route}) {
             navigation.navigate('Note', {
                 note: {
                     headline: noteHeadline,
+                    body: '',
+                    hasImage: false,
                 },
             });
 
@@ -58,17 +71,17 @@ export default function NotesScreen({navigation, route}) {
 
     /* Load data from firestore */
     useEffect(() => {
-        async function fetchData() {
+        const unsubscribe = navigation.addListener('focus', async () => {
             try {
                 setNotes(await noteDB.readAll());
             }
             catch (err) {
                 console.log(err);
             }
-        };
-
-        fetchData();
-    });
+        });
+      
+        return unsubscribe;
+    }, [navigation]);
 
     /*******************************************************************
      Screen view
@@ -100,7 +113,7 @@ export default function NotesScreen({navigation, route}) {
                     maxLength={50}
                 />
                 <Pressable style={styles.inputButton} onPress={goToNewNote}>
-                    <FontAwesomeIcon style={styles.inputButtonIcon} icon={faPlus} />
+                    <FontAwesomeIcon style={styles.inputButtonIcon} icon={faPlus} size={20} />
                 </Pressable>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -162,7 +175,7 @@ const styles = StyleSheet.create({
     },
 
     inputButton: {
-        padding: 12,
+        padding: 8,
         borderRadius: 24,
         backgroundColor: '#006ee6',
     },
